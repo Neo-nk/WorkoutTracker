@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rep Sheet">
+<title>Rep Sheet</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --card: #111111;
+    --line: #1e1e1e;
+    --accent: #c8f04a;
+    --accent-full: #4ac8f0;
+    --accent-push: #f07a4a;
+    --accent-legs: #c44af0;
+    --text: #e8e8e8;
+    --muted: #555;
+    --warm: #f5c842;
+    --red: #f04a4a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body { overscroll-behavior-y: contain; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    padding: max(24px, env(safe-area-inset-top)) 16px max(40px, env(safe-area-inset-bottom));
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* Brand */
+  .brand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    animation: fadeDown 0.4s ease both;
+  }
+
+  .brand-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    color: var(--text);
+  }
+
+  .brand-name span { color: var(--accent); }
+
+  .reset-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    padding: 6px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .reset-btn:active { background: var(--card); }
+
+  /* Tab switcher */
+  .tab-switcher {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 28px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 4px;
+    animation: fadeDown 0.4s 0.05s ease both;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 10px 4px;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  .tab-btn.active-pull { background: var(--accent); color: #0a0a0a; font-weight: 600; }
+  .tab-btn.active-full { background: var(--accent-full); color: #0a0a0a; font-weight: 600; }
+  .tab-btn.active-push { background: var(--accent-push); color: #0a0a0a; font-weight: 600; }
+  .tab-btn.active-legs { background: var(--accent-legs); color: #0a0a0a; font-weight: 600; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 28px;
+    animation: fadeDown 0.5s 0.05s ease both;
+  }
+
+  .header-left .label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .header-left h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 60px;
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+  }
+
+  .pull-color { color: var(--accent); }
+  .full-color { color: var(--accent-full); }
+  .push-color { color: var(--accent-push); }
+  .legs-color { color: var(--accent-legs); }
+
+  .day-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    background: var(--line);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .muscle-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+    animation: fadeDown 0.5s 0.1s ease both;
+  }
+
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+
+  .tag.pull-primary { border-color: var(--accent); color: var(--accent); }
+  .tag.full-primary { border-color: var(--accent-full); color: var(--accent-full); }
+  .tag.push-primary { border-color: var(--accent-push); color: var(--accent-push); }
+  .tag.legs-primary { border-color: var(--accent-legs); color: var(--accent-legs); }
+
+  .progress-bar-wrap {
+    margin-bottom: 28px;
+    animation: fadeUp 0.4s 0.15s ease both;
+  }
+
+  .progress-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .progress-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .progress-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  .progress-bar {
+    height: 4px;
+    background: var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    width: 0%;
+  }
+
+  .pull-fill { background: var(--accent); }
+  .full-fill { background: var(--accent-full); }
+  .push-fill { background: var(--accent-push); }
+  .legs-fill { background: var(--accent-legs); }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    padding-left: 2px;
+  }
+
+  .exercise-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 24px;
+  }
+
+  .exercise {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.1s;
+    animation: fadeUp 0.4s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .exercise:active { transform: scale(0.985); }
+
+  .exercise::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .pull-exercise::before { background: var(--accent); }
+  .full-exercise::before { background: var(--accent-full); }
+  .push-exercise::before { background: var(--accent-push); }
+  .legs-exercise::before { background: var(--accent-legs); }
+
+  .exercise.done::before { opacity: 1; }
+
+  .pull-exercise.done { background: #141a07; border-color: #2a3a0a; }
+  .full-exercise.done { background: #071419; border-color: #0a2a38; }
+  .push-exercise.done { background: #1a0f07; border-color: #3a200a; }
+  .legs-exercise.done { background: #130719; border-color: #280a3a; }
+
+  .exercise-info { flex: 1; }
+
+  .exercise-name {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    transition: color 0.2s;
+  }
+
+  .pull-exercise.done .exercise-name { color: var(--accent); }
+  .full-exercise.done .exercise-name { color: var(--accent-full); }
+  .push-exercise.done .exercise-name { color: var(--accent-push); }
+  .legs-exercise.done .exercise-name { color: var(--accent-legs); }
+
+  .exercise-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .exercise-meta span { color: #777; }
+
+  .exercise-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .rpe {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .rpe-val {
+    display: block;
+    font-size: 18px;
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.05em;
+  }
+
+  .check {
+    width: 26px;
+    height: 26px;
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .pull-exercise.done .check { background: var(--accent); border-color: var(--accent); }
+  .full-exercise.done .check { background: var(--accent-full); border-color: var(--accent-full); }
+  .push-exercise.done .check { background: var(--accent-push); border-color: var(--accent-push); }
+  .legs-exercise.done .check { background: var(--accent-legs); border-color: var(--accent-legs); }
+
+  .check svg { opacity: 0; transition: opacity 0.2s; width: 14px; height: 14px; }
+  .exercise.done .check svg { opacity: 1; }
+
+  .tips {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 8px;
+    animation: fadeUp 0.4s 0.55s ease both;
+  }
+
+  .tips-header {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--warm);
+    margin-bottom: 10px;
+  }
+
+  .tips ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .tips li {
+    font-size: 13px;
+    color: #888;
+    padding-left: 14px;
+    position: relative;
+    line-height: 1.4;
+  }
+
+  .tips li::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    color: var(--muted);
+    font-size: 10px;
+    top: 2px;
+  }
+
+  /* Install banner */
+  .install-banner {
+    position: fixed;
+    bottom: 20px;
+    left: 16px;
+    right: 16px;
+    max-width: 448px;
+    margin: 0 auto;
+    background: var(--card);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    animation: fadeUp 0.4s ease;
+    z-index: 100;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+
+  .install-banner.show { display: flex; }
+
+  .install-text {
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.4;
+    flex: 1;
+  }
+
+  .install-text strong { color: var(--accent); }
+
+  .install-close {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 4px;
+  }
+
+  /* Offline indicator */
+  .offline-pill {
+    position: fixed;
+    top: max(20px, env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%) translateY(-60px);
+    background: var(--warm);
+    color: #0a0a0a;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 600;
+    transition: transform 0.3s;
+    z-index: 200;
+  }
+
+  .offline-pill.show { transform: translateX(-50%) translateY(0); }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="offline-pill" id="offlinePill">⚡ Offline</div>
+
+<div class="brand">
+  <div class="brand-name">REP<span>SHEET</span></div>
+  <button class="reset-btn" onclick="resetCurrent()">Reset</button>
+</div>
+
+<div class="tab-switcher">
+  <button class="tab-btn active-pull" id="pullTab" onclick="switchTab('pull')">Pull</button>
+  <button class="tab-btn" id="pushTab" onclick="switchTab('push')">Push</button>
+  <button class="tab-btn" id="legsTab" onclick="switchTab('legs')">Legs</button>
+  <button class="tab-btn" id="fullTab" onclick="switchTab('full')">Full</button>
+</div>
+
+<!-- ===== PULL DAY ===== -->
+<div class="view active" id="pullView">
+  <div class="header">
+    <div class="header-left">
+      <div class="label">Training / Back & Biceps</div>
+      <h1 class="pull-color">PULL<br>DAY</h1>
+    </div>
+    <div><span class="day-tag">7 exercises</span></div>
+  </div>
+
+  <div class="muscle-tags">
+    <span class="tag pull-primary">Lats</span>
+    <span class="tag pull-primary">Rhomboids</span>
+    <span class="tag pull-primary">Biceps</span>
+    <span class="tag">Rear Delts</span>
+    <span class="tag">Traps</span>
+    <span class="tag">Forearms</span>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-top">
+      <span class="progress-label">Progress</span>
+      <span class="progress-count pull-color" id="pullCount">0 / 7</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill pull-fill" id="pullFill"></div></div>
+  </div>
+
+  <div class="section-label">Compound Lifts</div>
+  <div class="exercise-list">
+    <div class="exercise pull-exercise" data-id="pull-1" onclick="toggle(this,'pull')">
+      <div class="exercise-info"><div class="exercise-name">Deadlift</div><div class="exercise-meta">4 sets · <span>4–6 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--red)">9</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise pull-exercise" data-id="pull-2" onclick="toggle(this,'pull')">
+      <div class="exercise-info"><div class="exercise-name">Pull-ups / Weighted Pull-ups</div><div class="exercise-meta">4 sets · <span>6–8 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--red)">8</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise pull-exercise" data-id="pull-3" onclick="toggle(this,'pull')">
+      <div class="exercise-info"><div class="exercise-name">Barbell Bent-Over Row</div><div class="exercise-meta">3 sets · <span>6–8 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--warm)">8</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+  </div>
+
+  <div class="section-label">Isolation & Accessories</div>
+  <div class="exercise-list">
+    <div class="exercise pull-exercise" data-id="pull-4" onclick="toggle(this,'pull')" style="animation-delay:0.30s">
+      <div class="exercise-info"><div class="exercise-name">Cable Lat Pulldown</div><div class="exercise-meta">3 sets · <span>10–12 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--warm)">7</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise pull-exercise" data-id="pull-5" onclick="toggle(this,'pull')" style="animation-delay:0.35s">
+      <div class="exercise-info"><div class="exercise-name">Seated Cable Row</div><div class="exercise-meta">3 sets · <span>10–12 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--warm)">7</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise pull-exercise" data-id="pull-6" onclick="toggle(this,'pull')" style="animation-delay:0.40s">
+      <div class="exercise-info"><div class="exercise-name">Face Pulls</div><div class="exercise-meta">3 sets · <span>15–20 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--accent)">6</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise pull-exercise" data-id="pull-7" onclick="toggle(this,'pull')" style="animation-delay:0.45s">
+      <div class="exercise-info"><div class="exercise-name">Dumbbell Hammer Curl</div><div class="exercise-meta">3 sets · <span>10–12 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--accent)">6</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+  </div>
+
+  <div class="tips">
+    <div class="tips-header">⚡ Cues</div>
+    <ul>
+      <li>Lead every pull with your elbows, not your hands</li>
+      <li>Squeeze shoulder blades together at the top of rows</li>
+      <li>Keep deadlift bar close — scrape the shins</li>
+      <li>Full stretch at the bottom of pulldowns for lat activation</li>
+      <li>Rest 2–3 min after heavy compound sets</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===== PUSH DAY ===== -->
+<div class="view" id="pushView">
+  <div class="header">
+    <div class="header-left">
+      <div class="label">Training / Chest, Shoulders & Triceps</div>
+      <h1 class="push-color">PUSH<br>DAY</h1>
+    </div>
+    <div><span class="day-tag">7 exercises</span></div>
+  </div>
+
+  <div class="muscle-tags">
+    <span class="tag push-primary">Chest</span>
+    <span class="tag push-primary">Front Delts</span>
+    <span class="tag push-primary">Triceps</span>
+    <span class="tag">Side Delts</span>
+    <span class="tag">Serratus</span>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-top">
+      <span class="progress-label">Progress</span>
+      <span class="progress-count push-color" id="pushCount">0 / 7</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill push-fill" id="pushFill"></div></div>
+  </div>
+
+  <div class="section-label">Compound Lifts</div>
+  <div class="exercise-list">
+    <div class="exercise push-exercise" data-id="push-1" onclick="toggle(this,'push')">
+      <div class="exercise-info"><div class="exercise-name">Barbell Bench Press</div><div class="exercise-meta">4 sets · <span>4–6 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--red)">9</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise push-exercise" data-id="push-2" onclick="toggle(this,'push')">
+      <div class="exercise-info"><div class="exercise-name">Overhead Press (Barbell)</div><div class="exercise-meta">4 sets · <span>5–7 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--red)">8</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise push-exercise" data-id="push-3" onclick="toggle(this,'push')">
+      <div class="exercise-info"><div class="exercise-name">Incline Dumbbell Press</div><div class="exercise-meta">3 sets · <span>8–10 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--warm)">8</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+  </div>
+
+  <div class="section-label">Isolation & Accessories</div>
+  <div class="exercise-list">
+    <div class="exercise push-exercise" data-id="push-4" onclick="toggle(this,'push')" style="animation-delay:0.30s">
+      <div class="exercise-info"><div class="exercise-name">Cable Chest Fly</div><div class="exercise-meta">3 sets · <span>12–15 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--warm)">7</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise push-exercise" data-id="push-5" onclick="toggle(this,'push')" style="animation-delay:0.35s">
+      <div class="exercise-info"><div class="exercise-name">Dumbbell Lateral Raise</div><div class="exercise-meta">3 sets · <span>15–20 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--accent-push)">6</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise push-exercise" data-id="push-6" onclick="toggle(this,'push')" style="animation-delay:0.40s">
+      <div class="exercise-info"><div class="exercise-name">Skull Crushers (EZ Bar)</div><div class="exercise-meta">3 sets · <span>10–12 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--accent-push)">7</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise push-exercise" data-id="push-7" onclick="toggle(this,'push')" style="animation-delay:0.45s">
+      <div class="exercise-info"><div class="exercise-name">Cable Tricep Pushdown</div><div class="exercise-meta">3 sets · <span>12–15 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--accent-push)">6</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+  </div>
+
+  <div class="tips">
+    <div class="tips-header">⚡ Cues</div>
+    <ul>
+      <li>Bench first — chest and shoulders are freshest at the start</li>
+      <li>OHP before isolation — it's still a big compound, needs full focus</li>
+      <li>Retract and depress your scapula on all pressing movements</li>
+      <li>Slow the eccentric on skull crushers — control the weight down</li>
+      <li>Keep lateral raises strict — no swinging, lead with the elbow</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===== LEG DAY ===== -->
+<div class="view" id="legsView">
+  <div class="header">
+    <div class="header-left">
+      <div class="label">Training / Quads, Hamstrings & Glutes</div>
+      <h1 class="legs-color">LEG<br>DAY</h1>
+    </div>
+    <div><span class="day-tag">7 exercises</span></div>
+  </div>
+
+  <div class="muscle-tags">
+    <span class="tag legs-primary">Quads</span>
+    <span class="tag legs-primary">Hamstrings</span>
+    <span class="tag legs-primary">Glutes</span>
+    <span class="tag">Calves</span>
+    <span class="tag">Adductors</span>
+    <span class="tag">Core</span>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-top">
+      <span class="progress-label">Progress</span>
+      <span class="progress-count legs-color" id="legsCount">0 / 7</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill legs-fill" id="legsFill"></div></div>
+  </div>
+
+  <div class="section-label">Compound Lifts</div>
+  <div class="exercise-list">
+    <div class="exercise legs-exercise" data-id="legs-1" onclick="toggle(this,'legs')">
+      <div class="exercise-info"><div class="exercise-name">Barbell Back Squat</div><div class="exercise-meta">4 sets · <span>4–6 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--red)">9</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise legs-exercise" data-id="legs-2" onclick="toggle(this,'legs')">
+      <div class="exercise-info"><div class="exercise-name">Romanian Deadlift</div><div class="exercise-meta">4 sets · <span>6–8 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--red)">8</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise legs-exercise" data-id="legs-3" onclick="toggle(this,'legs')">
+      <div class="exercise-info"><div class="exercise-name">Bulgarian Split Squat</div><div class="exercise-meta">3 sets · <span>8–10 reps each leg</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--warm)">8</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+  </div>
+
+  <div class="section-label">Isolation & Accessories</div>
+  <div class="exercise-list">
+    <div class="exercise legs-exercise" data-id="legs-4" onclick="toggle(this,'legs')" style="animation-delay:0.30s">
+      <div class="exercise-info"><div class="exercise-name">Leg Press</div><div class="exercise-meta">3 sets · <span>10–12 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--warm)">7</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise legs-exercise" data-id="legs-5" onclick="toggle(this,'legs')" style="animation-delay:0.35s">
+      <div class="exercise-info"><div class="exercise-name">Leg Curl (Machine)</div><div class="exercise-meta">3 sets · <span>10–12 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--accent-legs)">7</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise legs-exercise" data-id="legs-6" onclick="toggle(this,'legs')" style="animation-delay:0.40s">
+      <div class="exercise-info"><div class="exercise-name">Leg Extension (Machine)</div><div class="exercise-meta">3 sets · <span>12–15 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--accent-legs)">6</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise legs-exercise" data-id="legs-7" onclick="toggle(this,'legs')" style="animation-delay:0.45s">
+      <div class="exercise-info"><div class="exercise-name">Standing Calf Raise</div><div class="exercise-meta">4 sets · <span>15–20 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--accent-legs)">6</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+  </div>
+
+  <div class="tips">
+    <div class="tips-header">⚡ Cues</div>
+    <ul>
+      <li>Squat first — heaviest and most technical, needs a fresh CNS</li>
+      <li>RDL second — hinge pattern, still compound but less quad demand</li>
+      <li>Drive knees out on squat — don't let them cave inward</li>
+      <li>Feel the stretch in your hamstrings at the bottom of RDLs</li>
+      <li>Full range on calf raises — don't bounce, pause at the bottom</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===== FULL BODY ===== -->
+<div class="view" id="fullView">
+  <div class="header">
+    <div class="header-left">
+      <div class="label">Training / All Muscle Groups</div>
+      <h1 class="full-color">FULL<br>BODY</h1>
+    </div>
+    <div><span class="day-tag">8 exercises</span></div>
+  </div>
+
+  <div class="muscle-tags">
+    <span class="tag full-primary">Quads</span>
+    <span class="tag full-primary">Chest</span>
+    <span class="tag full-primary">Back</span>
+    <span class="tag full-primary">Shoulders</span>
+    <span class="tag">Hamstrings</span>
+    <span class="tag">Glutes</span>
+    <span class="tag">Arms</span>
+    <span class="tag">Core</span>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-top">
+      <span class="progress-label">Progress</span>
+      <span class="progress-count full-color" id="fullCount">0 / 8</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill full-fill" id="fullFill"></div></div>
+  </div>
+
+  <div class="section-label">Big Compounds First</div>
+  <div class="exercise-list">
+    <div class="exercise full-exercise" data-id="full-1" onclick="toggle(this,'full')">
+      <div class="exercise-info"><div class="exercise-name">Barbell Back Squat</div><div class="exercise-meta">4 sets · <span>4–6 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--red)">9</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise full-exercise" data-id="full-2" onclick="toggle(this,'full')">
+      <div class="exercise-info"><div class="exercise-name">Barbell Bench Press</div><div class="exercise-meta">4 sets · <span>5–7 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--red)">8</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise full-exercise" data-id="full-3" onclick="toggle(this,'full')">
+      <div class="exercise-info"><div class="exercise-name">Barbell Romanian Deadlift</div><div class="exercise-meta">3 sets · <span>6–8 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--red)">8</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+  </div>
+
+  <div class="section-label">Secondary Compounds</div>
+  <div class="exercise-list">
+    <div class="exercise full-exercise" data-id="full-4" onclick="toggle(this,'full')" style="animation-delay:0.30s">
+      <div class="exercise-info"><div class="exercise-name">Pull-ups or Lat Pulldown</div><div class="exercise-meta">3 sets · <span>6–10 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--warm)">7</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise full-exercise" data-id="full-5" onclick="toggle(this,'full')" style="animation-delay:0.35s">
+      <div class="exercise-info"><div class="exercise-name">Dumbbell Shoulder Press</div><div class="exercise-meta">3 sets · <span>8–10 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--warm)">7</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+  </div>
+
+  <div class="section-label">Accessories & Finishers</div>
+  <div class="exercise-list">
+    <div class="exercise full-exercise" data-id="full-6" onclick="toggle(this,'full')" style="animation-delay:0.40s">
+      <div class="exercise-info"><div class="exercise-name">Leg Press</div><div class="exercise-meta">3 sets · <span>10–12 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--accent-full)">7</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise full-exercise" data-id="full-7" onclick="toggle(this,'full')" style="animation-delay:0.45s">
+      <div class="exercise-info"><div class="exercise-name">Cable Tricep Pushdown</div><div class="exercise-meta">3 sets · <span>12–15 reps</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--accent-full)">6</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+    <div class="exercise full-exercise" data-id="full-8" onclick="toggle(this,'full')" style="animation-delay:0.50s">
+      <div class="exercise-info"><div class="exercise-name">Plank</div><div class="exercise-meta">3 sets · <span>45–60 sec hold</span></div></div>
+      <div class="exercise-right"><div class="rpe"><span class="rpe-val" style="color:var(--accent-full)">6</span>RPE</div><div class="check"><svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg></div></div>
+    </div>
+  </div>
+
+  <div class="tips">
+    <div class="tips-header">⚡ Cues</div>
+    <ul>
+      <li>Squat first — it's the most demanding, needs freshest CNS</li>
+      <li>Bench and RDL alternate push/pull to keep rest efficient</li>
+      <li>Brace your core on every compound — treat it like a belt</li>
+      <li>Full body days = moderate weight, perfect form, no ego</li>
+      <li>Rest 90 sec between accessories, 2–3 min after big lifts</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Install prompt -->
+<div class="install-banner" id="installBanner">
+  <div class="install-text">
+    <strong>Install Rep Sheet</strong><br>
+    Tap Share → Add to Home Screen
+  </div>
+  <button class="install-close" onclick="hideInstall()">✕</button>
+</div>
+
+<script>
+  const totals = { pull: 7, push: 7, legs: 7, full: 8 };
+  const types = ['pull', 'push', 'legs', 'full'];
+  const STORAGE_KEY = 'repsheet-v1';
+  const TAB_KEY = 'repsheet-tab-v1';
+  const INSTALL_DISMISSED_KEY = 'repsheet-install-dismissed';
+
+  // ------- Persistence -------
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+
+  function saveState(state) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  let state = loadState();
+
+  // ------- Restore on load -------
+  function restore() {
+    document.querySelectorAll('.exercise').forEach(el => {
+      const id = el.dataset.id;
+      if (state[id]) el.classList.add('done');
+    });
+    types.forEach(updateProgress);
+  }
+
+  // ------- Tabs -------
+  function switchTab(tab) {
+    types.forEach(t => {
+      document.getElementById(t + 'View').classList.toggle('active', t === tab);
+      document.getElementById(t + 'Tab').className = 'tab-btn' + (t === tab ? ` active-${t}` : '');
+    });
+    try { localStorage.setItem(TAB_KEY, tab); } catch (e) {}
+  }
+
+  // ------- Toggle exercise -------
+  function toggle(el, type) {
+    el.classList.toggle('done');
+    const id = el.dataset.id;
+    if (el.classList.contains('done')) state[id] = true;
+    else delete state[id];
+    saveState(state);
+    updateProgress(type);
+    // haptic on supported devices
+    if (window.navigator.vibrate) window.navigator.vibrate(10);
+  }
+
+  function updateProgress(type) {
+    const done = document.querySelectorAll(`#${type}View .exercise.done`).length;
+    document.getElementById(`${type}Count`).textContent = `${done} / ${totals[type]}`;
+    document.getElementById(`${type}Fill`).style.width = `${(done / totals[type]) * 100}%`;
+  }
+
+  function resetCurrent() {
+    const active = document.querySelector('.view.active');
+    if (!active) return;
+    const type = active.id.replace('View', '');
+    if (!confirm(`Reset ${type.toUpperCase()} progress?`)) return;
+    active.querySelectorAll('.exercise.done').forEach(el => {
+      el.classList.remove('done');
+      delete state[el.dataset.id];
+    });
+    saveState(state);
+    updateProgress(type);
+  }
+
+  // ------- Offline indicator -------
+  function updateOnline() {
+    document.getElementById('offlinePill').classList.toggle('show', !navigator.onLine);
+  }
+  window.addEventListener('online', updateOnline);
+  window.addEventListener('offline', updateOnline);
+
+  // ------- Install banner (iOS) -------
+  function isIos() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+  }
+  function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  }
+  function hideInstall() {
+    document.getElementById('installBanner').classList.remove('show');
+    try { localStorage.setItem(INSTALL_DISMISSED_KEY, '1'); } catch (e) {}
+  }
+  function maybeShowInstall() {
+    const dismissed = localStorage.getItem(INSTALL_DISMISSED_KEY);
+    if (isIos() && !isStandalone() && !dismissed) {
+      setTimeout(() => document.getElementById('installBanner').classList.add('show'), 1500);
+    }
+  }
+
+  // ------- Boot -------
+  restore();
+  const savedTab = (() => { try { return localStorage.getItem(TAB_KEY); } catch(e) { return null; } })();
+  if (savedTab && types.includes(savedTab)) switchTab(savedTab);
+  updateOnline();
+  maybeShowInstall();
+
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
