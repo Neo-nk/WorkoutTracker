@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rep Sheet">
+<title>Rep Sheet — Edit</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  /* Page titles */
+  .page-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px;
+    letter-spacing: 0.03em;
+    line-height: 1;
+    margin-bottom: 6px;
+    animation: fadeDown 0.4s 0.05s ease both;
+  }
+  .page-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 32px;
+    animation: fadeDown 0.4s 0.08s ease both;
+  }
+
+  /* Day picker cards */
+  .picker-cards { display: flex; flex-direction: column; gap: 10px; }
+  .picker-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 20px 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.1s;
+    animation: fadeUp 0.4s ease both;
+  }
+  .picker-card:nth-child(1) { animation-delay: 0.08s; }
+  .picker-card:nth-child(2) { animation-delay: 0.14s; }
+  .picker-card:nth-child(3) { animation-delay: 0.20s; }
+  .picker-card:nth-child(4) { animation-delay: 0.26s; }
+  .picker-card:active { transform: scale(0.985); }
+
+  .picker-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+  }
+  .picker-card.pull::before  { background: var(--accent); }
+  .picker-card.push::before  { background: var(--accent-push); }
+  .picker-card.legs::before  { background: var(--accent-legs); }
+  .picker-card.full::before  { background: var(--accent-full); }
+
+  .picker-card-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 0.04em;
+  }
+  .pull  .picker-card-name { color: var(--accent); }
+  .push  .picker-card-name { color: var(--accent-push); }
+  .legs  .picker-card-name { color: var(--accent-legs); }
+  .full  .picker-card-name { color: var(--accent-full); }
+
+  .picker-card-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .picker-arrow { font-size: 20px; color: var(--muted); }
+
+  /* Edit UI */
+  .edit-day-header {
+    margin-bottom: 28px;
+    animation: fadeDown 0.4s 0.05s ease both;
+  }
+  .edit-day-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px;
+    letter-spacing: 0.03em;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .edit-day-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Section */
+  .edit-section { margin-bottom: 28px; animation: fadeUp 0.4s ease both; }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .section-label-input {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid transparent;
+    color: var(--muted);
+    outline: none;
+    width: 100%;
+    padding: 2px 0;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .section-label-input:focus { border-color: var(--line); color: var(--text); }
+
+  /* Exercise edit card */
+  .edit-exercise {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-bottom: 2px;
+    overflow: hidden;
+    position: relative;
+    animation: fadeUp 0.3s ease both;
+  }
+  .edit-exercise::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--line);
+  }
+  .edit-exercise.pull-ex::before  { background: var(--accent); }
+  .edit-exercise.push-ex::before  { background: var(--accent-push); }
+  .edit-exercise.legs-ex::before  { background: var(--accent-legs); }
+  .edit-exercise.full-ex::before  { background: var(--accent-full); }
+
+  .edit-exercise-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 14px 10px 18px;
+  }
+
+  .ex-name-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid transparent;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    padding: 2px 0;
+    transition: border-color 0.2s;
+  }
+  .ex-name-input:focus { border-color: var(--line); }
+
+  .reorder-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  .reorder-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 2px 6px;
+    font-size: 12px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+  }
+  .reorder-btn:active { color: var(--text); background: var(--line); }
+
+  .delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px 6px;
+    line-height: 1;
+    border-radius: 6px;
+    flex-shrink: 0;
+    transition: color 0.15s;
+  }
+  .delete-btn:active { color: var(--red); }
+
+  .edit-exercise-meta {
+    display: flex;
+    gap: 6px;
+    padding: 0 14px 14px 18px;
+  }
+
+  .meta-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+  }
+  .meta-field label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .meta-field input {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 7px 8px;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+  }
+  .meta-field input:focus { border-color: var(--muted); }
+
+  /* Add exercise button */
+  .add-exercise-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    margin-top: 2px;
+  }
+  .add-exercise-btn:active { border-color: var(--muted); color: var(--text); }
+
+  /* Add section button */
+  .add-section-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px dashed var(--line);
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    margin-bottom: 100px;
+  }
+  .add-section-btn:active { border-color: var(--muted); color: var(--text); }
+
+  /* Sticky footer */
+  .edit-footer {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 14px 16px max(20px, env(safe-area-inset-bottom));
+    background: linear-gradient(transparent, var(--bg) 30%);
+    display: flex;
+    gap: 10px;
+    z-index: 50;
+  }
+  .save-btn {
+    flex: 1;
+    background: var(--accent);
+    color: #0a0a0a;
+    border: none;
+    border-radius: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 16px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .save-btn:active { opacity: 0.85; transform: scale(0.98); }
+  .save-btn.push-accent { background: var(--accent-push); }
+  .save-btn.legs-accent { background: var(--accent-legs); color: #fff; }
+  .save-btn.full-accent { background: var(--accent-full); }
+
+  .reset-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 16px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .reset-btn:active { color: var(--red); border-color: var(--red); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: max(20px, env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%) translateY(-60px);
+    background: var(--text);
+    color: var(--bg);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 300;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="offline-pill" id="offlinePill">⚡ Offline</div>
+<div class="toast" id="toast"></div>
+
+<div class="brand" style="margin-bottom:16px;">
+  <a class="back-link" id="backLink" href="index.html">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,2 4,7 9,12"/></svg>
+    <span id="backText">Home</span>
+  </a>
+</div>
+
+<div id="editRoot"></div>
+
+<script src="js/workouts.js"></script>
+<script>
+  const params = new URLSearchParams(location.search);
+  const dayId  = params.get('day');
+
+  // Deep-clone the workout so edits are local until saved
+  let editData = null;
+
+  function uid() {
+    return `${dayId}-x-${Date.now()}`;
+  }
+
+  // ── PICKER VIEW ─────────────────────────────────────────────────────────────
+  function renderPicker() {
+    document.getElementById('backLink').href = 'index.html';
+    document.getElementById('backText').textContent = 'Home';
+
+    const workouts = getWorkouts();
+    const cards = allDayIds().map(id => {
+      const w = workouts[id];
+      return `
+        <a class="picker-card ${id}" href="edit.html?day=${id}">
+          <div>
+            <div class="picker-card-name">${w.label}</div>
+            <div class="picker-card-sub">${w.subtitle}</div>
+          </div>
+          <div class="picker-arrow">›</div>
+        </a>`;
+    }).join('');
+
+    document.getElementById('editRoot').innerHTML = `
+      <div class="page-title">EDIT</div>
+      <div class="page-sub">Select a workout to modify</div>
+      <div class="picker-cards">${cards}</div>`;
+  }
+
+  // ── EDITOR VIEW ──────────────────────────────────────────────────────────────
+  function accentClass() {
+    const map = { pull: '', push: ' push-accent', legs: ' legs-accent', full: ' full-accent' };
+    return map[dayId] ?? '';
+  }
+
+  function accentVar() {
+    const map = { pull: 'var(--accent)', push: 'var(--accent-push)', legs: 'var(--accent-legs)', full: 'var(--accent-full)' };
+    return map[dayId] ?? 'var(--text)';
+  }
+
+  function renderEditor() {
+    document.getElementById('backLink').href = 'edit.html';
+    document.getElementById('backText').textContent = 'Edit';
+
+    const workout = getWorkout(dayId);
+    if (!workout) {
+      document.getElementById('editRoot').innerHTML = `<p style="color:var(--muted);font-family:'DM Mono',monospace;font-size:13px;">Day not found.</p>`;
+      return;
+    }
+
+    editData = JSON.parse(JSON.stringify(workout));
+    buildEditorDOM();
+  }
+
+  function buildEditorDOM() {
+    const sectionsHtml = editData.sections.map((section, si) => renderSection(section, si)).join('');
+
+    document.getElementById('editRoot').innerHTML = `
+      <div class="edit-day-header">
+        <div class="edit-day-title" style="color:${accentVar()}">${editData.label}</div>
+        <div class="edit-day-sub">${editData.subtitle}</div>
+      </div>
+      <div id="sectionsContainer">${sectionsHtml}</div>
+      <button class="add-section-btn" onclick="addSection()">+ Add Section</button>
+      <div class="edit-footer">
+        <button class="reset-btn" onclick="resetToDefaults()">Reset defaults</button>
+        <button class="save-btn${accentClass()}" onclick="saveChanges()">Save Changes</button>
+      </div>`;
+  }
+
+  function renderSection(section, si) {
+    const exHtml = section.exercises.map((ex, ei) => renderExercise(ex, si, ei)).join('');
+    return `
+      <div class="edit-section" data-si="${si}">
+        <div class="section-header">
+          <input class="section-label-input"
+            value="${escHtml(section.label)}"
+            onchange="editData.sections[${si}].label = this.value"
+            placeholder="Section name"
+          />
+        </div>
+        <div class="exercise-rows" id="section-${si}-rows">${exHtml}</div>
+        <button class="add-exercise-btn" onclick="addExercise(${si})">+ Add Exercise</button>
+      </div>`;
+  }
+
+  function renderExercise(ex, si, ei) {
+    const total = editData.sections[si].exercises.length;
+    const upDisabled   = ei === 0 ? 'disabled style="opacity:0.2"' : '';
+    const downDisabled = ei === total - 1 ? 'disabled style="opacity:0.2"' : '';
+
+    return `
+      <div class="edit-exercise ${dayId}-ex" data-si="${si}" data-ei="${ei}" id="ex-${ex.id}">
+        <div class="edit-exercise-top">
+          <input class="ex-name-input"
+            value="${escHtml(ex.name)}"
+            onchange="updateExField(${si},${ei},'name',this.value)"
+            placeholder="Exercise name"
+          />
+          <div class="reorder-btns">
+            <button class="reorder-btn" ${upDisabled} onclick="moveEx(${si},${ei},-1)">▲</button>
+            <button class="reorder-btn" ${downDisabled} onclick="moveEx(${si},${ei},1)">▼</button>
+          </div>
+          <button class="delete-btn" onclick="deleteEx(${si},${ei})" title="Remove">✕</button>
+        </div>
+        <div class="edit-exercise-meta">
+          <div class="meta-field">
+            <label>Sets</label>
+            <input type="number" min="1" max="20" value="${ex.sets}"
+              onchange="updateExField(${si},${ei},'sets',+this.value)" />
+          </div>
+          <div class="meta-field" style="flex:2">
+            <label>Reps</label>
+            <input type="text" value="${escHtml(ex.reps)}"
+              onchange="updateExField(${si},${ei},'reps',this.value)"
+              placeholder="e.g. 6–8" />
+          </div>
+          <div class="meta-field">
+            <label>RPE</label>
+            <input type="number" min="1" max="10" value="${ex.rpe}"
+              onchange="updateExField(${si},${ei},'rpe',+this.value)" />
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── EDIT ACTIONS ─────────────────────────────────────────────────────────────
+  function updateExField(si, ei, field, value) {
+    editData.sections[si].exercises[ei][field] = value;
+  }
+
+  function moveEx(si, ei, dir) {
+    const exs = editData.sections[si].exercises;
+    const target = ei + dir;
+    if (target < 0 || target >= exs.length) return;
+    [exs[ei], exs[target]] = [exs[target], exs[ei]];
+    refreshSection(si);
+  }
+
+  function deleteEx(si, ei) {
+    if (editData.sections[si].exercises.length === 1) {
+      if (!confirm('Remove the last exercise in this section?')) return;
+    }
+    editData.sections[si].exercises.splice(ei, 1);
+    refreshSection(si);
+  }
+
+  function addExercise(si) {
+    editData.sections[si].exercises.push({ id: uid(), name: '', sets: 3, reps: '8–12', rpe: 7 });
+    refreshSection(si);
+    // focus the new name input
+    const rows = document.getElementById(`section-${si}-rows`);
+    const inputs = rows.querySelectorAll('.ex-name-input');
+    inputs[inputs.length - 1]?.focus();
+  }
+
+  function addSection() {
+    editData.sections.push({ label: 'New Section', exercises: [] });
+    const si = editData.sections.length - 1;
+    const container = document.getElementById('sectionsContainer');
+    const div = document.createElement('div');
+    div.innerHTML = renderSection(editData.sections[si], si);
+    container.appendChild(div.firstElementChild);
+  }
+
+  function refreshSection(si) {
+    const container = document.getElementById('sectionsContainer');
+    const sections  = container.querySelectorAll('.edit-section');
+    const newHtml   = renderSection(editData.sections[si], si);
+    const tmp = document.createElement('div');
+    tmp.innerHTML = newHtml;
+    sections[si].replaceWith(tmp.firstElementChild);
+  }
+
+  // ── SAVE / RESET ─────────────────────────────────────────────────────────────
+  function saveChanges() {
+    // Flush any active inputs before reading editData
+    document.activeElement?.blur();
+    saveWorkoutDay(dayId, editData);
+    showToast('Saved!');
+  }
+
+  function resetToDefaults() {
+    if (!confirm(`Reset ${editData.label} to defaults? Your custom changes will be lost.`)) return;
+    resetWorkoutDay(dayId);
+    editData = JSON.parse(JSON.stringify(getWorkout(dayId)));
+    buildEditorDOM();
+    showToast('Reset to defaults');
+  }
+
+  // ── TOAST ─────────────────────────────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+  }
+
+  // ── OFFLINE ───────────────────────────────────────────────────────────────────
+  function updateOnline() {
+    document.getElementById('offlinePill').classList.toggle('show', !navigator.onLine);
+  }
+  window.addEventListener('online', updateOnline);
+  window.addEventListener('offline', updateOnline);
+
+  // ── BOOT ──────────────────────────────────────────────────────────────────────
+  if (dayId) {
+    renderEditor();
+  } else {
+    renderPicker();
+  }
+  updateOnline();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+</script>
+</body>
+</html>

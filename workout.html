@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rep Sheet">
+<title>Rep Sheet</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  /* Header */
+  .workout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 28px;
+    animation: fadeDown 0.5s 0.05s ease both;
+  }
+  .header-left .day-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .header-left h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 60px;
+    line-height: 0.9;
+    letter-spacing: 0.02em;
+  }
+  .day-count-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    background: var(--line);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  /* Muscle tags row */
+  .muscle-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+    animation: fadeDown 0.5s 0.1s ease both;
+  }
+
+  /* Progress */
+  .progress-bar-wrap {
+    margin-bottom: 28px;
+    animation: fadeUp 0.4s 0.15s ease both;
+  }
+  .progress-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .progress-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .progress-count {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 0.05em;
+  }
+  .progress-bar { height: 4px; background: var(--line); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); width: 0%; }
+
+  /* Section label */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    padding-left: 2px;
+  }
+
+  /* Exercise list */
+  .exercise-list { display: flex; flex-direction: column; gap: 2px; margin-bottom: 24px; }
+
+  .exercise {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.1s;
+    animation: fadeUp 0.4s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+  .exercise:active { transform: scale(0.985); }
+
+  .exercise::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .pull-ex::before  { background: var(--accent); }
+  .push-ex::before  { background: var(--accent-push); }
+  .legs-ex::before  { background: var(--accent-legs); }
+  .full-ex::before  { background: var(--accent-full); }
+
+  .exercise.done::before { opacity: 1; }
+  .pull-ex.done  { background: #141a07; border-color: #2a3a0a; }
+  .push-ex.done  { background: #1a0f07; border-color: #3a200a; }
+  .legs-ex.done  { background: #130719; border-color: #280a3a; }
+  .full-ex.done  { background: #071419; border-color: #0a2a38; }
+
+  .exercise-info { flex: 1; }
+  .exercise-name { font-size: 15px; font-weight: 500; margin-bottom: 4px; transition: color 0.2s; }
+  .pull-ex.done  .exercise-name { color: var(--accent); }
+  .push-ex.done  .exercise-name { color: var(--accent-push); }
+  .legs-ex.done  .exercise-name { color: var(--accent-legs); }
+  .full-ex.done  .exercise-name { color: var(--accent-full); }
+
+  .exercise-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .exercise-meta span { color: #777; }
+
+  .exercise-right { display: flex; align-items: center; gap: 12px; }
+
+  .rpe { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); text-align: right; }
+  .rpe-val { display: block; font-size: 18px; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.05em; }
+
+  .check {
+    width: 26px; height: 26px;
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .pull-ex.done  .check { background: var(--accent);      border-color: var(--accent); }
+  .push-ex.done  .check { background: var(--accent-push); border-color: var(--accent-push); }
+  .legs-ex.done  .check { background: var(--accent-legs); border-color: var(--accent-legs); }
+  .full-ex.done  .check { background: var(--accent-full); border-color: var(--accent-full); }
+
+  .check svg { opacity: 0; transition: opacity 0.2s; width: 14px; height: 14px; }
+  .exercise.done .check svg { opacity: 1; }
+
+  /* Cues */
+  .cues {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-top: 8px;
+    animation: fadeUp 0.4s 0.55s ease both;
+  }
+  .cues-header {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--warm);
+    margin-bottom: 10px;
+  }
+  .cues ul { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .cues li { font-size: 13px; color: #888; padding-left: 14px; position: relative; line-height: 1.4; }
+  .cues li::before { content: '—'; position: absolute; left: 0; color: var(--muted); font-size: 10px; top: 2px; }
+
+  /* Not found state */
+  .not-found { text-align: center; padding: 60px 0; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="offline-pill" id="offlinePill">⚡ Offline</div>
+
+<div class="brand" style="margin-bottom:16px;">
+  <a class="back-link" href="index.html">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,2 4,7 9,12"/></svg>
+    Home
+  </a>
+  <button class="btn-ghost" onclick="resetDay()">Reset</button>
+</div>
+
+<div id="workoutRoot"></div>
+
+<script src="js/workouts.js"></script>
+<script>
+  const PROGRESS_KEY = 'repsheet-v1';
+  const TAB_KEY      = 'repsheet-tab-v1';
+
+  const params  = new URLSearchParams(location.search);
+  const dayId   = params.get('day');
+  const workout = dayId ? getWorkout(dayId) : null;
+
+  let state = (() => { try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}'); } catch(e) { return {}; } })();
+  function saveState() { try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(state)); } catch(e) {} }
+
+  const checkSvg = `<svg viewBox="0 0 14 14" fill="none" stroke="#0a0a0a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7 6,11 12,3"/></svg>`;
+
+  function rpeColor(rpe) {
+    if (rpe >= 9) return 'var(--red)';
+    if (rpe >= 7) return 'var(--warm)';
+    const map = { pull: 'var(--accent)', push: 'var(--accent-push)', legs: 'var(--accent-legs)', full: 'var(--accent-full)' };
+    return map[dayId] ?? 'var(--muted)';
+  }
+
+  function accentVar() {
+    const map = { pull: 'var(--accent)', push: 'var(--accent-push)', legs: 'var(--accent-legs)', full: 'var(--accent-full)' };
+    return map[dayId] ?? 'var(--text)';
+  }
+
+  function renderExercise(ex, delay) {
+    const done = state[ex.id] ? 'done' : '';
+    return `
+      <div class="exercise ${dayId}-ex ${done}" data-id="${ex.id}" data-day="${dayId}" style="animation-delay:${delay}s" onclick="toggle(this)">
+        <div class="exercise-info">
+          <div class="exercise-name">${ex.name}</div>
+          <div class="exercise-meta">${ex.sets} sets · <span>${ex.reps} reps</span></div>
+        </div>
+        <div class="exercise-right">
+          <div class="rpe">
+            <span class="rpe-val" style="color:${rpeColor(ex.rpe)}">${ex.rpe}</span>RPE
+          </div>
+          <div class="check">${checkSvg}</div>
+        </div>
+      </div>`;
+  }
+
+  function renderWorkout() {
+    if (!workout) {
+      document.getElementById('workoutRoot').innerHTML = `<div class="not-found">Day not found. <a href="index.html" style="color:var(--accent)">Go home →</a></div>`;
+      return;
+    }
+
+    const total   = totalExercises(workout);
+    const muscles = workout.muscles.map(m => `<span class="tag ${m.primary ? dayId + '-primary' : ''}">${m.name}</span>`).join('');
+
+    let delay = 0.05;
+    const sectionsHtml = workout.sections.map(section => {
+      const exHtml = section.exercises.map(ex => {
+        const html = renderExercise(ex, delay);
+        delay += 0.05;
+        return html;
+      }).join('');
+      return `<div class="section-label">${section.label}</div><div class="exercise-list">${exHtml}</div>`;
+    }).join('');
+
+    const cuesHtml = workout.cues.map(c => `<li>${c}</li>`).join('');
+
+    document.getElementById('workoutRoot').innerHTML = `
+      <div class="workout-header">
+        <div class="header-left">
+          <div class="day-label">Training / ${workout.subtitle}</div>
+          <h1 style="color:${accentVar()}">${workout.label.replace(' ', '<br>')}</h1>
+        </div>
+        <div><span class="day-count-tag">${total} exercises</span></div>
+      </div>
+
+      <div class="muscle-tags">${muscles}</div>
+
+      <div class="progress-bar-wrap">
+        <div class="progress-top">
+          <span class="progress-label">Progress</span>
+          <span class="progress-count" id="progressCount" style="color:${accentVar()}">0 / ${total}</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="background:${accentVar()}"></div>
+        </div>
+      </div>
+
+      ${sectionsHtml}
+
+      <div class="cues">
+        <div class="cues-header">⚡ Cues</div>
+        <ul>${cuesHtml}</ul>
+      </div>`;
+
+    updateProgress();
+  }
+
+  function toggle(el) {
+    el.classList.toggle('done');
+    const id = el.dataset.id;
+    if (el.classList.contains('done')) state[id] = true;
+    else delete state[id];
+    saveState();
+    updateProgress();
+    if (navigator.vibrate) navigator.vibrate(10);
+  }
+
+  function updateProgress() {
+    if (!workout) return;
+    const total = totalExercises(workout);
+    const done  = document.querySelectorAll('.exercise.done').length;
+    const el    = document.getElementById('progressCount');
+    const fill  = document.getElementById('progressFill');
+    if (el)   el.textContent = `${done} / ${total}`;
+    if (fill) fill.style.width = `${(done / total) * 100}%`;
+  }
+
+  function resetDay() {
+    if (!workout || !confirm(`Reset ${workout.label} progress?`)) return;
+    document.querySelectorAll('.exercise.done').forEach(el => {
+      el.classList.remove('done');
+      delete state[el.dataset.id];
+    });
+    saveState();
+    updateProgress();
+  }
+
+  function updateOnline() {
+    document.getElementById('offlinePill').classList.toggle('show', !navigator.onLine);
+  }
+  window.addEventListener('online', updateOnline);
+  window.addEventListener('offline', updateOnline);
+
+  if (dayId) {
+    try { localStorage.setItem(TAB_KEY, dayId); } catch(e) {}
+  }
+
+  renderWorkout();
+  updateOnline();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+</script>
+</body>
+</html>
